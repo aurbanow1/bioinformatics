@@ -1,5 +1,6 @@
-# Plot clusters on expression change.
-
+library(limma)
+library(Glimma)
+library(edgeR)
 library(data.table)
 
 setwd("/Volumes/MackDisk/Wong lab- jointed/Samantha - Wound healing project/DE_davide_Alu")
@@ -95,6 +96,7 @@ for (n_clust in c(1:10)) {
     facet_wrap(~clust)
   
   ggsave(temp_plot, file=paste('late_cluster_',n_clust,'.png', sep = ""))
-  write.csv(data_with_cust_info_early,file=paste('late_cluster_',n_clust,'.csv', sep = ""))
+  write.csv(data_with_cust_info_late,file=paste('late_cluster_',n_clust,'.csv', sep = ""))
 }
 savehistory("late_early.R")
+
