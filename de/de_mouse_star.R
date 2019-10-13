@@ -16,17 +16,18 @@ convertIDs <- function( ids, fromKey, toKey, db ) {
 }
 
 
-path="/Users/andrzej/Downloads/aorta"
+path="/Volumes/rna/mouse_aorta/count_without_outliar"
 setwd(path)
 directory<-path
 group=rep(c("ctrl","ko"), each=10)
 files<-list.files()
+group=group[2:20]
+
 
 #Read mappings from STAR alligner. 
-ff <- list.files( path = ".", pattern = "*001$", full.names = TRUE )
+ff <- list.files( path = ".", pattern = "*_Zfp*", full.names = TRUE )
 counts.files <- lapply( ff, read.table, skip = 4 )
 counts <- as.data.frame( sapply( counts.files, function(x) x[ , 2 ] ) )
-ff <- gsub( "_001", "", ff )
 ff <- gsub( "[.]/", "", ff )
 colnames(counts) <- ff
 row.names(counts) <- counts.files[[1]]$V1
@@ -52,7 +53,7 @@ merged_names_character=unlist(as.character(merged_names_unique$mgi_symbol))
 rownames(ddsHTSeq)<- coalesce(convertIDs( rownames(ddsHTSeq) , "ENSEMBL", "SYMBOL", org.Mm.eg.db ), 
                               merged_names_character,
                               rownames(ddsHTSeq))
-  
+
 # DE
 dds <- DESeq(ddsHTSeq)
 
@@ -94,6 +95,10 @@ plotPCA(vsd, intgroup=c("group"))
 dev.copy(png,'pca.png')
 dev.off()
 
+####  Since the clustering is only relevant for genes that actually carry signal, one usually carries it out only for a 
+####  subset of most highly variable genes. Here, for demonstration, let us select the 35 genes with the highest variance 
+####  across samples. We will work with the rlog transformed counts:
+
 topVarGenes <- head( order( rowVars( assay(rld) ), decreasing=TRUE ), 15 )
 pheatmap( assay(rld)[ topVarGenes, ], scale="row", 
           trace="none", dendrogram="column", 
@@ -128,6 +133,38 @@ pheatmap(assay(rld)[ topVarGenes, ], scale="row",
 
 dev.copy(png,'all-gene-distance.png')
 dev.off()
+
+#### Top DE
+topVarGenesDE <- rownames(head( res[order(res$padj),], 15 ))
+
+count_de <- subset(assay(rld), rownames(rld) %in% topVarGenesDE)
+pheatmap( count_de, scale="row", 
+          trace="none", dendrogram="column", 
+          col = colorRampPalette( rev(brewer.pal(9, "RdBu")) )(255),
+          annotate_col=df )
+dev.copy(png,'15-gene-distance_de.png')
+dev.off()
+
+
+topVarGenesDE <- rownames(head( res[order(res$padj),], 50 ))
+count_de <- subset(assay(rld), rownames(rld) %in% topVarGenesDE)
+pheatmap( count_de, scale="row", 
+          trace="none", dendrogram="column", 
+          col = colorRampPalette( rev(brewer.pal(9, "RdBu")) )(255),
+          annotate_col=df )
+dev.copy(png,'50-gene-distance_de.png')
+dev.off()
+
+
+topVarGenesDE <- rownames(head( res[order(res$padj),], 100 ))
+count_de <- subset(assay(rld), rownames(rld) %in% topVarGenesDE)
+pheatmap( count_de, scale="row", 
+          trace="none", dendrogram="column", 
+          col = colorRampPalette( rev(brewer.pal(9, "RdBu")) )(255),
+          annotate_col=df )
+dev.copy(png,'100-gene-distance_de.png')
+dev.off()
+
 
 EnhancedVolcano(res,
                 lab = rownames(res),
